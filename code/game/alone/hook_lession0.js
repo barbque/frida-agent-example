@@ -63,13 +63,14 @@ function hook_update() {
         Interceptor.attach(md5_update, {
             onEnter: function (args) {
                 // 这儿必须指定hexdump的length，hexdump默认长度256不足以显示全部内容
+                console.log("function is enter");
                 this.buffer = args[0]
-                console.log("buffer:", hexdump(this.buffer))
-                console.log("args0:", hexdump(args[1], {length: args[2].toInt32()}));
+                console.log("buffer:\n", hexdump(this.buffer, {length: args[2].toInt32()}))
+                console.log("args0:\n", Memory.readCString(args[1]));
             },
             onLeave: function (retval) {
                 console.log("function is leaving");
-                console.log("buffer:", hexdump(this.buffer))
+                console.log("buffer:\n", hexdump(this.buffer))
             }
         })
     }
