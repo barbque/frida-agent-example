@@ -16,6 +16,28 @@ print(a)
 密文 ^ 密钥 = 明文
  */
 
+function inline_hook() {
+    var so_addr = Module.findBaseAddress("libnative-lib.so");
+    if (so_addr) {
+        console.log("so_addr:", so_addr);
+        var addr_b90 = so_addr.add(0xb90);
+        var sub_b90 = new NativeFunction(addr_b90, 'int', ['pointer', 'int', 'pointer']);
+        var arg1 = Memory.allocUtf8String('111111111111111111111111111111');
+        var arg2 = 30;
+        var arg3 = Memory.allocUtf8String('areyousure??????');
+        var ret_b90 = sub_b90(arg1, arg2, arg3);
+        console.log(Memory.readByteArray(arg1, 64));
+
+
+        var addr_d90 = so_addr.add(0xd90);
+        var sub_d90 = new NativeFunction(addr_d90, 'pointer', ['pointer', 'int']);
+        var arg1 = Memory.allocUtf8String('111111111111111111111111111111');
+        var arg2 = 30;
+        var ret_d90 = sub_d90(arg1, arg2);
+        console.log(Memory.readByteArray(ret_d90, 64));
+    }
+}
+
 
 // 指针 参数程序内改变，需要函数离开时在打印下这个指针
 function hook_B90() {
@@ -169,7 +191,7 @@ function hook_D58() {
         Interceptor.attach(EOR, {
             onEnter: function (args) {
                 if (ishook) {
-                        if (eorlen < 30) {
+                    if (eorlen < 30) {
                         eor.push(this.context.x12);
                         eorlen += 1;
                     } else {
@@ -184,7 +206,8 @@ function hook_D58() {
 
 function main() {
     hook_x9()
-    hook_D58()
+    // hook_D58()
+    // inline_hook()
 }
 
 
