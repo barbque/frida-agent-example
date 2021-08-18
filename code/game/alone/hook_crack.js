@@ -18,7 +18,6 @@ function hook_content() {
 }
 
 // ----------------------------------crack2---------------------------------------------
-// ollvm
 
 function hook_str() {
     var str_addr = Module.findExportByName("libc.so", "strstr")
