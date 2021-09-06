@@ -31,7 +31,7 @@ function freeze_funcs() {
         }
     });
     let tm_s = 1626403551;
-    let tm_us = 5151606;
+    let tm_us = 151606;
     let gettimeofday_addr = Module.findExportByName("libc.so", "gettimeofday");
     Interceptor.attach(gettimeofday_addr, {
         onEnter: function (args) {
@@ -95,7 +95,7 @@ function hook_jni(func_name) {
                     this.arg_array = args[1];
                 },
                 onLeave: function (retval) {
-                    jbhexdump(this.arg_array);
+                    // jbhexdump(this.arg_array);
                     console.log("SetByteArrayRegion onLeave");
                 }
             })
@@ -131,7 +131,21 @@ function inline_hook() {
             hook_flag = false;
             this.hook_jni_interceptor.detach();
             console.log(`onLeave sub_D9AC`);
-            jbhexdump(retval);
+            // jbhexdump(retval);
+        }
+    });
+
+    Interceptor.attach(base_addr.add(0xABDBC).add(1), {
+        onEnter: function (args) {
+            if (hook_flag) {
+                console.log(`call sub_ABDBC`);
+                this.arg_0 = args[0]
+                // this.arg_0.readPointer() 没有内容
+                console.log("arg_0", hexdump(this.arg_0.readPointer()));
+            }
+        },
+        onLeave: function (retval) {
+            console.log("sub_ABDBC onLeave arg_0", hexdump(this.arg_0.readPointer()));
         }
     });
 
@@ -140,6 +154,7 @@ function inline_hook() {
             if (hook_flag) {
                 console.log(`call sub_AAE88`);
                 this.arg_0 = args[0];
+                // readPointer 在二级指针用，结构体又内嵌了结构体。如果没有内容，一般都是指针，指针指向哪里，打出来看看
                 console.log("sub_AAE88 arg_0", hexdump(args[0].readPointer()));
             }
         },
@@ -147,23 +162,11 @@ function inline_hook() {
             console.log("sub_AAE88 onLeave arg_0", hexdump(this.arg_0.readPointer()));
         }
     });
-    Interceptor.attach(base_addr.add(0xABDBC).add(1), {
-        onEnter: function (args) {
-            if (hook_flag) {
-                console.log(`call sub_ABDBC`);
-                this.arg_0 = args[0];
-                console.log("sub_ABDBC arg_0", hexdump(args[0].readPointer()));
-            }
-        },
-        onLeave: function (retval) {
-            console.log("sub_ABDBC onLeave arg_0", hexdump(this.arg_0.readPointer()));
-        }
-    });
 
     Interceptor.attach(base_addr.add(0xAC214).add(1), {
         onEnter: function (args) {
             console.log(`call sub_AC214`);
-            console.log("input", args[1], args[2], args[3], args[4]);
+            console.log("input", args[0], args[1], args[2], args[3]);
         }
     });
 
@@ -171,14 +174,51 @@ function inline_hook() {
         onEnter: function (args) {
             console.log(`call sub_AD1D0`);
             console.log("input", args[0], args[1], args[2], args[3]);
-            console.log(hexdump(args[2].readByteArray(args[3].toUInt32())));
+            console.log("args[2]", Memory.readByteArray(args[2], args[3].toInt32()))
+        }
+    });
+
+    Interceptor.attach(base_addr.add(0x139A4).add(1), {
+        onLeave: function (retval) {
+            console.log("sub_139A4 retval", hexdump(retval.readPointer()));
+        }
+    });
+
+    Interceptor.attach(base_addr.add(0x82648).add(1), {
+        onEnter: function (args) {
+            console.log(`call sub_82648`);
+            console.log("arg_1", hexdump(args[1].readByteArray(args[2].toUInt32())))
+            console.log("arg_2", args[2].toUInt32())
+        }
+    });
+    Interceptor.attach(base_addr.add(0x84890).add(1), {
+        onEnter: function (args) {
+            this.arg_1 = args[1];
+        },
+        onLeave: function (retval) {
+            console.log(`sub_84890 onLeave`);
+            console.log("arg_1", hexdump(this.arg_1))
+        }
+    });
+
+    Interceptor.attach(base_addr.add(0x85A40).add(1), {
+        onEnter: function (args) {
+            console.log(`call sub_85A40`);
+            console.log("sub_85A40 arg_1", hexdump(args[1].readByteArray(args[2].toUInt32())));
+            console.log("sub_85A40 arg_2", args[2]);
+            console.log("sub_85A40 arg_3", hexdump(args[3].readByteArray(args[4].toUInt32())));
+            console.log("sub_85A40 arg_4", args[4]);
         }
     });
 
 }
 
-freeze_funcs();
-inline_hook();
-call_getByte();
+function main() {
+    freeze_funcs()
+    inline_hook()
+    call_getByte()
+}
+
+setImmediate(main)
 
 
